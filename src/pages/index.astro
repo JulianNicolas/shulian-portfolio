@@ -1,0 +1,970 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base>
+  <header class="bar">
+    <div class="wrap bar-in">
+      <span class="wordmark">shulian<span class="dot">.</span>dev</span>
+      <nav class="top">
+        <a href="#work" class="nav-hide">Work</a>
+        <a href="#stack" class="nav-hide">Stack</a>
+        <a href="#path" class="nav-hide">Path</a>
+        <a href="#contact">Contact</a>
+        <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle color theme">◑ theme</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero" id="top">
+      <h1>Julián Antonucci</h1>
+      <p class="role">
+        Senior backend engineer building <b>Node.js</b> services that stay predictable under load —
+        <b>distributed systems</b>, <b>Postgres</b>, and pragmatic <b>AWS</b>.
+      </p>
+
+      <div class="facts">
+        <div class="fact">
+          <div class="k mono">Now</div>
+          <div class="v">
+            Lead backend on <a href="#work">ink-cover</a> — migrating the platform from a DigitalOcean
+            droplet to AWS serverless, zero downtime.
+          </div>
+        </div>
+        <div class="fact">
+          <div class="k mono">Stack</div>
+          <div class="v mono">Node.js · TypeScript · Postgres · TypeORM · AWS (Lambda · SQS · S3 · CloudFront)</div>
+        </div>
+        <div class="fact">
+          <div class="k mono">Based</div>
+          <div class="v">Argentina · working remote across time zones</div>
+        </div>
+        <div class="fact">
+          <div class="k mono">Links</div>
+          <div class="v">
+            <a href="https://github.com/JulianNicolas">GitHub</a> &nbsp;·&nbsp;
+            <a href="https://www.linkedin.com/in/julian-antonucci/">LinkedIn</a> &nbsp;·&nbsp;
+            <a href="#contact">CV (PDF)</a> &nbsp;·&nbsp;
+            <a href="mailto:antonuccijulian@gmail.com">Email</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="work">
+      <p class="eyebrow">Selected work</p>
+
+      <!-- CASE 1 — real -->
+      <article class="case">
+        <div class="case-body">
+          <div class="case-head">
+            <h3>ink-cover — serverless migration</h3>
+            <span class="when mono">2025 – present</span>
+          </div>
+          <p class="lede">
+            A Node.js/TypeScript product that turns uploaded images into analysis reports. I lead the
+            backend and I'm moving the whole platform off one droplet onto AWS serverless while it
+            keeps serving traffic.
+          </p>
+
+          <h4>Where it started</h4>
+          <p class="para">
+            A single DigitalOcean droplet ran the API, the Postgres database and image processing
+            together. Deploys were a <code>git push</code> that SSH'd into the box — no CI gate, no
+            rollback, no preview. Every upload processed synchronously, so traffic spikes queued
+            behind image work and the API slowed for everyone.
+          </p>
+
+          <div
+            class="arch"
+            role="img"
+            aria-label="Architecture before and after: a single droplet running API, Postgres and image processing becomes CloudFront in front of a Lambda API that enqueues work on SQS for a worker Lambda, with S3 for bytes and managed Postgres."
+          >
+            <div class="arch-grid">
+              <div class="arch-col before">
+                <h5>Before</h5>
+                <div class="flow">
+                  <div class="node">client</div>
+                  <div class="link-v"></div>
+                  <div class="node hot">1× droplet<br />API + Postgres + image proc</div>
+                  <div class="link-v"></div>
+                  <div class="node hot">base64 blobs in DB</div>
+                </div>
+              </div>
+              <div class="arch-col after">
+                <h5>After</h5>
+                <div class="flow">
+                  <div class="node">client</div>
+                  <div class="link-v"></div>
+                  <div class="node">CloudFront</div>
+                  <div class="link-v"></div>
+                  <div class="node key">API · Lambda</div>
+                  <div class="link-v"></div>
+                  <div class="split">
+                    <div class="node key">SQS → worker</div>
+                    <div class="node">Postgres</div>
+                  </div>
+                  <div class="link-v"></div>
+                  <div class="node key">S3 · image + preview bytes</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h4>What I did</h4>
+          <ul>
+            <li>
+              Introduced a <code>StoragePort</code> interface with an <code>S3Storage</code>
+              implementation, moving image and preview bytes out of Postgres and onto S3. Read paths
+              now serve signed URLs instead of base64 payloads.
+            </li>
+            <li>
+              Added <code>previewKey</code> / <code>imageKey</code> columns plus a backfill, and
+              relaxed the legacy <code>base64 NOT NULL</code> constraint so old and new rows coexist
+              through the cutover.
+            </li>
+            <li>
+              Redesigned the analysis pipeline around a queue: uploads return immediately, processing
+              runs on a worker that scales independently of the API.
+            </li>
+            <li>
+              Killed a class of "stale app after deploy" bugs — a cached <code>index.html</code> and
+              orphaned service workers that kept serving a months-old bundle to returning users.
+            </li>
+            <li>
+              Next: CI gate + preview environments in front of the auto-deploy pipeline, so a push
+              can't ship a broken build straight to production.
+            </li>
+          </ul>
+        </div>
+
+        <aside class="panel">
+          <div class="panel-card">
+            <div class="panel-row">
+              <span class="m-k mono">Impact</span>
+              <span class="m-v">Zero-downtime cutover, in progress</span>
+            </div>
+            <div class="panel-row">
+              <span class="m-k mono">Upload p95</span>
+              <span class="m-v slot mono">sync → async · add metric</span>
+            </div>
+            <div class="panel-row">
+              <span class="m-k mono">Infra cost / mo</span>
+              <span class="m-v slot mono">DO $XX <span class="arrow">→</span> AWS $YY</span>
+            </div>
+            <div class="panel-row">
+              <span class="m-k mono">Deploy safety</span>
+              <span class="m-v">manual SSH <span class="arrow">→</span> CI + preview</span>
+            </div>
+            <div class="panel-row">
+              <span class="m-k mono">Role</span>
+              <span class="m-v">Lead backend engineer</span>
+            </div>
+            <div class="stacklist">
+              <span class="chip">Node.js</span><span class="chip">TypeScript</span><span class="chip">TypeORM</span>
+              <span class="chip">Postgres</span><span class="chip">AWS S3</span><span class="chip">SQS</span>
+              <span class="chip">Lambda</span><span class="chip">CloudFront</span>
+            </div>
+          </div>
+        </aside>
+      </article>
+
+      <!-- CASE 2 — template -->
+      <article class="case">
+        <div class="case-body">
+          <div class="case-head">
+            <h3>High-throughput ingestion API</h3>
+            <span class="when mono">20XX – 20XX</span>
+            <span class="tag">Template — replace with your project</span>
+          </div>
+          <p class="lede">
+            One paragraph: the product, the load it takes, and the one hard constraint that shaped
+            the design (a latency budget, an ordering guarantee, a cost ceiling).
+          </p>
+          <h4>What I did</h4>
+          <ul>
+            <li>The architectural decision you'd defend in an interview — and the trade-off you accepted to make it.</li>
+            <li>A reliability or data-integrity problem you found and fixed.</li>
+            <li>A performance change with a before/after number in the panel.</li>
+          </ul>
+        </div>
+        <aside class="panel">
+          <div class="panel-card">
+            <div class="panel-row"><span class="m-k mono">Throughput</span><span class="m-v slot mono">X req/s sustained</span></div>
+            <div class="panel-row"><span class="m-k mono">p99 latency</span><span class="m-v slot mono">Xms → Yms</span></div>
+            <div class="panel-row"><span class="m-k mono">Team</span><span class="m-v slot mono">size · your role</span></div>
+            <div class="stacklist">
+              <span class="chip">Node.js</span><span class="chip">Kafka / SQS</span><span class="chip">Redis</span><span class="chip">Postgres</span>
+            </div>
+          </div>
+        </aside>
+      </article>
+
+      <!-- CASE 3 — template -->
+      <article class="case">
+        <div class="case-body">
+          <div class="case-head">
+            <h3>Payments &amp; billing service</h3>
+            <span class="when mono">20XX – 20XX</span>
+            <span class="tag">Template — replace with your project</span>
+          </div>
+          <p class="lede">
+            A domain where correctness matters more than speed — money, subscriptions, entitlements.
+            Say what "wrong" would have cost.
+          </p>
+          <h4>What I did</h4>
+          <ul>
+            <li>How you made operations idempotent and safe to retry.</li>
+            <li>How you reconciled against the provider (Stripe, MercadoPago) and caught drift.</li>
+            <li>An audit or observability practice you introduced.</li>
+          </ul>
+        </div>
+        <aside class="panel">
+          <div class="panel-card">
+            <div class="panel-row"><span class="m-k mono">Volume</span><span class="m-v slot mono">$ / month processed</span></div>
+            <div class="panel-row"><span class="m-k mono">Reconciliation</span><span class="m-v slot mono">mismatch rate</span></div>
+            <div class="stacklist">
+              <span class="chip">Node.js</span><span class="chip">TypeScript</span><span class="chip">Stripe</span><span class="chip">Postgres</span>
+            </div>
+          </div>
+        </aside>
+      </article>
+
+      <p class="note">
+        Case 1 is drawn from real work on this project. Cases 2 and 3 are structural templates — same
+        shape, your projects and numbers. Three deep case studies read better than a grid of ten repos.
+      </p>
+    </section>
+
+    <section id="stack">
+      <p class="eyebrow">Stack</p>
+      <div class="stack-grid">
+        <div class="stack-col">
+          <h3>Runtime</h3>
+          <ul>
+            <li>Node.js <span>— core</span></li>
+            <li>TypeScript <span>— strict</span></li>
+            <li>NestJS / Express</li>
+            <li>Vitest · Jest</li>
+          </ul>
+        </div>
+        <div class="stack-col">
+          <h3>Data</h3>
+          <ul>
+            <li>PostgreSQL <span>— primary</span></li>
+            <li>TypeORM · Prisma</li>
+            <li>Redis <span>— cache · locks</span></li>
+            <li>SQL modelling · migrations</li>
+          </ul>
+        </div>
+        <div class="stack-col">
+          <h3>AWS</h3>
+          <ul>
+            <li>Lambda · API Gateway</li>
+            <li>SQS · EventBridge</li>
+            <li>S3 · CloudFront</li>
+            <li>RDS · IAM · CDK</li>
+          </ul>
+        </div>
+        <div class="stack-col">
+          <h3>Delivery</h3>
+          <ul>
+            <li>Docker</li>
+            <li>GitHub Actions <span>— CI/CD</span></li>
+            <li>Observability <span>— logs · traces</span></li>
+            <li>Load &amp; failure testing</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="path">
+      <p class="eyebrow">Path</p>
+      <div class="path">
+        <div class="stop">
+          <div class="yr">2025 — now</div>
+          <div class="role">
+            <b>Lead Backend Engineer</b> · <span class="co">ink-cover</span>
+            <p>
+              Own the backend. Leading the DigitalOcean → AWS serverless migration; storage
+              abstraction, queue-based pipeline, deploy safety.
+            </p>
+          </div>
+        </div>
+        <div class="stop">
+          <div class="yr">20XX — 20XX</div>
+          <div class="role">
+            <b>Senior Backend Engineer</b> · <span class="co">Company</span>
+            <p class="tag inline">Template — one line on scope, scale, and what you owned.</p>
+          </div>
+        </div>
+        <div class="stop">
+          <div class="yr">20XX — 20XX</div>
+          <div class="role">
+            <b>Backend Engineer</b> · <span class="co">Company</span>
+            <p>Template — the role where you went from "writes features" to "owns systems".</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <p class="eyebrow">Contact</p>
+      <p class="contact-lead">
+        Hiring for a backend or platform role, or need a system that won't fall over? <b>Let's talk.</b>
+      </p>
+      <div class="clinks">
+        <a class="clink" href="mailto:antonuccijulian@gmail.com">✉ <span class="mono">antonuccijulian@gmail.com</span></a>
+        <a class="clink" href="https://github.com/JulianNicolas">⌥ <span class="mono">github.com/JulianNicolas</span></a>
+        <a class="clink" href="https://www.linkedin.com/in/julian-antonucci/">in <span class="mono">linkedin.com/in/julian-antonucci</span></a>
+        <a class="clink" href="#">↓ <span class="mono">Résumé — PDF</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap foot-in">
+      <span>© 2026 Julián Antonucci — shulian.dev</span>
+      <span class="mono">Built with Astro · deployed on Vercel</span>
+    </div>
+  </footer>
+
+  <script is:inline>
+    (function () {
+      var btn = document.getElementById('themeBtn');
+      var root = document.documentElement;
+      function current() {
+        var t = root.getAttribute('data-theme');
+        if (t) return t;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      btn.addEventListener('click', function () {
+        var next = current() === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try {
+          localStorage.setItem('shulian-theme', next);
+        } catch (e) {}
+      });
+    })();
+  </script>
+</Base>
+
+<style is:global>
+  /* ---------- tokens: light (bare :root = full palette) ---------- */
+  :root {
+    --ground: #f4f5f8;
+    --surface: #ffffff;
+    --surface-sunk: #edeff3;
+    --ink: #14181f;
+    --ink-soft: #3b434f;
+    --muted: #626c7a;
+    --hairline: #dce0e8;
+    --hairline-2: #c9cfda;
+    --accent: #1e5fcc;
+    --accent-ink: #17408a;
+    --good: #1c8f63;
+    --warn: #b3730e;
+    --shadow: 0 1px 2px rgba(20, 24, 31, 0.05), 0 8px 28px -12px rgba(20, 24, 31, 0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --ground: #0e1116;
+      --surface: #151a21;
+      --surface-sunk: #11151b;
+      --ink: #e8ebf1;
+      --ink-soft: #c2c9d4;
+      --muted: #8c97a6;
+      --hairline: #262c36;
+      --hairline-2: #333b47;
+      --accent: #6098f6;
+      --accent-ink: #a9c6fb;
+      --good: #3fb784;
+      --warn: #d69537;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 34px -14px rgba(0, 0, 0, 0.6);
+    }
+  }
+  :root[data-theme='dark'] {
+    --ground: #0e1116;
+    --surface: #151a21;
+    --surface-sunk: #11151b;
+    --ink: #e8ebf1;
+    --ink-soft: #c2c9d4;
+    --muted: #8c97a6;
+    --hairline: #262c36;
+    --hairline-2: #333b47;
+    --accent: #6098f6;
+    --accent-ink: #a9c6fb;
+    --good: #3fb784;
+    --warn: #d69537;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 34px -14px rgba(0, 0, 0, 0.6);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  img,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 400;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  .wrap {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ---------- top bar ---------- */
+  header.bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--ground) 86%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .bar-in {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 54px;
+  }
+  .wordmark {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: 0.98rem;
+    color: var(--ink);
+  }
+  .wordmark .dot {
+    color: var(--accent);
+  }
+  nav.top {
+    display: flex;
+    gap: 22px;
+    align-items: center;
+  }
+  nav.top a {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+  nav.top a:hover {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .theme-btn {
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--hairline-2);
+    border-radius: 6px;
+    padding: 4px 9px;
+    line-height: 1;
+  }
+  .theme-btn:hover {
+    color: var(--ink);
+    border-color: var(--accent);
+  }
+  @media (max-width: 620px) {
+    nav.top a.nav-hide {
+      display: none;
+    }
+  }
+
+  /* ---------- eyebrow ---------- */
+  .eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 26px;
+  }
+  .eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--hairline);
+  }
+
+  section {
+    padding: 68px 0;
+    border-top: 1px solid var(--hairline);
+  }
+  main.wrap > section:first-of-type {
+    border-top: 0;
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    padding: 74px 0 60px;
+  }
+  .hero h1 {
+    font-size: clamp(2.3rem, 6vw, 3.7rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.04;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+  .hero .role {
+    font-size: clamp(1.05rem, 2.4vw, 1.3rem);
+    color: var(--ink-soft);
+    font-weight: 300;
+    margin: 0 0 34px;
+    max-width: 34ch;
+    text-wrap: balance;
+  }
+  .hero .role b {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .facts {
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    background: var(--surface);
+    overflow: hidden;
+    max-width: 620px;
+  }
+  .fact {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    gap: 16px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--hairline);
+    font-size: 0.86rem;
+  }
+  .fact:first-child {
+    border-top: 0;
+  }
+  .fact .k {
+    color: var(--muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding-top: 3px;
+  }
+  .fact .v {
+    color: var(--ink-soft);
+  }
+  .fact .v a {
+    font-weight: 500;
+  }
+
+  /* ---------- case studies ---------- */
+  .case {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .case + .case {
+    margin-top: 30px;
+    padding-top: 46px;
+    border-top: 1px dashed var(--hairline-2);
+  }
+  @media (min-width: 860px) {
+    .case {
+      grid-template-columns: minmax(0, 1fr) 292px;
+      gap: 44px;
+    }
+  }
+
+  .case-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 14px;
+    margin-bottom: 8px;
+  }
+  .case h3 {
+    font-size: 1.42rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .case .when {
+    font-size: 0.76rem;
+    color: var(--muted);
+  }
+  .tag {
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 3px 7px;
+    border-radius: 5px;
+    line-height: 1;
+    color: var(--warn);
+    border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--hairline));
+    background: color-mix(in srgb, var(--warn) 9%, transparent);
+  }
+  .tag.inline {
+    display: inline-block;
+  }
+  .case .lede {
+    color: var(--ink-soft);
+    margin: 4px 0 20px;
+  }
+  .case .para {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.94rem;
+  }
+  .case h4 {
+    font-size: 0.74rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 22px 0 10px;
+  }
+  .case ul {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+    display: grid;
+    gap: 10px;
+  }
+  .case ul li {
+    position: relative;
+    padding-left: 20px;
+    color: var(--ink-soft);
+    font-size: 0.94rem;
+  }
+  .case ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .case code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.84em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--hairline);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+
+  .panel {
+    align-self: start;
+  }
+  @media (min-width: 860px) {
+    .panel {
+      position: sticky;
+      top: 74px;
+    }
+  }
+  .panel-card {
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .panel-row {
+    padding: 11px 15px;
+    border-top: 1px solid var(--hairline);
+    display: grid;
+    gap: 3px;
+  }
+  .panel-row:first-child {
+    border-top: 0;
+    background: var(--surface-sunk);
+  }
+  .panel-row .m-k {
+    font-size: 0.66rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .panel-row .m-v {
+    font-size: 0.9rem;
+    color: var(--ink);
+  }
+  .panel-row .m-v.slot {
+    color: var(--warn);
+  }
+  .panel-row .m-v .arrow {
+    color: var(--muted);
+  }
+  .stacklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 13px 15px;
+  }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.74rem;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: var(--surface-sunk);
+    border: 1px solid var(--hairline);
+    color: var(--ink-soft);
+  }
+
+  /* ---------- architecture diagram ---------- */
+  .arch {
+    margin: 8px 0 6px;
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    background: var(--surface);
+    padding: 18px;
+    overflow-x: auto;
+  }
+  .arch-grid {
+    display: grid;
+    gap: 22px;
+    min-width: 460px;
+  }
+  @media (min-width: 640px) {
+    .arch-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .arch-col h5 {
+    font-size: 0.68rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+  .arch-col.after h5 {
+    color: var(--accent);
+  }
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .node {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    border: 1px solid var(--hairline-2);
+    border-radius: 7px;
+    padding: 8px 10px;
+    background: var(--ground);
+    color: var(--ink-soft);
+    text-align: center;
+  }
+  .node.hot {
+    border-color: color-mix(in srgb, var(--warn) 55%, var(--hairline-2));
+    color: var(--warn);
+    background: color-mix(in srgb, var(--warn) 7%, transparent);
+  }
+  .node.key {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+  .link-v {
+    align-self: center;
+    width: 1px;
+    height: 16px;
+    background: var(--hairline-2);
+  }
+  .link-v::after {
+    content: '▾';
+    position: relative;
+    top: 8px;
+    left: -4px;
+    color: var(--hairline-2);
+    font-size: 0.6rem;
+  }
+  .split {
+    display: flex;
+    gap: 10px;
+  }
+  .split .node {
+    flex: 1;
+  }
+
+  /* ---------- stack section ---------- */
+  .stack-grid {
+    display: grid;
+    gap: 22px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 720px) {
+    .stack-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 940px) {
+    .stack-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .stack-col h3 {
+    font-size: 0.74rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--hairline);
+    font-weight: 600;
+  }
+  .stack-col ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 7px;
+  }
+  .stack-col li {
+    font-size: 0.875rem;
+    color: var(--ink-soft);
+  }
+  .stack-col li span {
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  /* ---------- path / timeline ---------- */
+  .path {
+    display: grid;
+    gap: 0;
+    max-width: 720px;
+  }
+  .stop {
+    display: grid;
+    grid-template-columns: 118px 1fr;
+    gap: 20px;
+    padding: 16px 0;
+    border-top: 1px solid var(--hairline);
+  }
+  .stop:first-child {
+    border-top: 0;
+  }
+  .stop .yr {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    padding-top: 2px;
+  }
+  .stop .role b {
+    font-weight: 600;
+  }
+  .stop .role .co {
+    color: var(--accent);
+  }
+  .stop .role p {
+    margin: 4px 0 0;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  /* ---------- contact ---------- */
+  .contact-lead {
+    font-size: clamp(1.3rem, 3.4vw, 1.9rem);
+    font-weight: 300;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 26px;
+  }
+  .contact-lead b {
+    font-weight: 600;
+  }
+  .clinks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .clink {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--hairline-2);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 0.875rem;
+    color: var(--ink);
+    background: var(--surface);
+  }
+  .clink:hover {
+    border-color: var(--accent);
+    text-decoration: none;
+    color: var(--accent);
+  }
+  .clink .mono {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  footer {
+    border-top: 1px solid var(--hairline);
+    padding: 26px 0 40px;
+  }
+  .foot-in {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .note {
+    margin: 30px 0 0;
+    max-width: 660px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    border-left: 2px solid var(--warn);
+    padding: 6px 0 6px 14px;
+  }
+</style>
