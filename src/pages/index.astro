@@ -34,7 +34,7 @@ import Base from '../layouts/Base.astro';
         </div>
         <div class="fact">
           <div class="k mono">Stack</div>
-          <div class="v mono">Node.js · TypeScript · Postgres · TypeORM · AWS (Lambda · SQS · S3 · CloudFront)</div>
+          <div class="v mono">Node.js · TypeScript · Postgres · TypeORM · AWS (App Runner · Lambda · SQS · S3 · CloudFront · CDK)</div>
         </div>
         <div class="fact">
           <div class="k mono">Based</div>
@@ -79,7 +79,7 @@ import Base from '../layouts/Base.astro';
           <div
             class="arch"
             role="img"
-            aria-label="Architecture before and after: a single droplet running API, Postgres and image processing becomes CloudFront in front of a Lambda API that enqueues work on SQS for a worker Lambda, with S3 for bytes and managed Postgres."
+            aria-label="Architecture before and after: a single droplet running API, Postgres and image processing becomes CloudFront in front of an App Runner API, a container-image Lambda worker behind SQS, serverless Postgres on Neon, S3 for image bytes, and EventBridge routing completion events to SES — the whole stack defined in AWS CDK."
           >
             <div class="arch-grid">
               <div class="arch-col before">
@@ -93,20 +93,23 @@ import Base from '../layouts/Base.astro';
                 </div>
               </div>
               <div class="arch-col after">
-                <h5>After</h5>
+                <h5>After — target</h5>
                 <div class="flow">
                   <div class="node">client</div>
                   <div class="link-v"></div>
-                  <div class="node">CloudFront</div>
+                  <div class="node">CloudFront · ACM · Route 53</div>
                   <div class="link-v"></div>
-                  <div class="node key">API · Lambda</div>
+                  <div class="node key">App Runner · API</div>
                   <div class="link-v"></div>
                   <div class="split">
-                    <div class="node key">SQS → worker</div>
-                    <div class="node">Postgres</div>
+                    <div class="node key">SQS → Lambda worker<br /><span class="mono" style="font-size:0.68rem">container image</span></div>
+                    <div class="node">Neon<br /><span class="mono" style="font-size:0.68rem">serverless Postgres</span></div>
                   </div>
                   <div class="link-v"></div>
-                  <div class="node key">S3 · image + preview bytes</div>
+                  <div class="split">
+                    <div class="node key">S3<br /><span class="mono" style="font-size:0.68rem">image + preview bytes</span></div>
+                    <div class="node">EventBridge → SES<br /><span class="mono" style="font-size:0.68rem">completion notify</span></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -125,16 +128,43 @@ import Base from '../layouts/Base.astro';
               through the cutover.
             </li>
             <li>
-              Redesigned the analysis pipeline around a queue: uploads return immediately, processing
-              runs on a worker that scales independently of the API.
+              Redesigned the analysis pipeline around a <code>Queue</code> port with a pluggable
+              backend — one Postgres implementation today (<code>LISTEN</code>/<code>NOTIFY</code> +
+              <code>FOR UPDATE SKIP LOCKED</code>), one SQS implementation for AWS, same worker code
+              either way.
+            </li>
+            <li>
+              Designed the target AWS architecture end to end in CDK: App Runner for the API, the
+              existing worker Docker image redeployed as a container-image Lambda behind SQS,
+              EventBridge routing job-completion events to SES for email notifications, and Neon
+              (serverless Postgres) in place of a managed instance.
             </li>
             <li>
               Killed a class of "stale app after deploy" bugs — a cached <code>index.html</code> and
               orphaned service workers that kept serving a months-old bundle to returning users.
             </li>
+          </ul>
+
+          <h4>Architecture decisions</h4>
+          <ul>
             <li>
-              Next: CI gate + preview environments in front of the auto-deploy pipeline, so a push
-              can't ship a broken build straight to production.
+              <b>App Runner over API Gateway + Lambda</b> for the API — the request path is rarely
+              idle at this traffic, so a container that autoscales on its own beats paying Lambda's
+              cold-start tax on every request.
+            </li>
+            <li>
+              <b>Neon over RDS</b> — at this volume an always-on managed instance would cost more than
+              the workload itself; Neon bills for compute actually used and scales to zero between
+              requests.
+            </li>
+            <li>
+              <b>No VPC, no NAT gateway</b> — App Runner, the worker Lambda and Neon all talk over
+              public TLS endpoints. A private database would have forced a NAT gateway that alone
+              costs more than the database.
+            </li>
+            <li>
+              <b>Worker ships as the same container image</b> the droplet ran, redeployed to Lambda —
+              no parallel build pipeline to maintain for two runtimes.
             </li>
           </ul>
         </div>
@@ -163,8 +193,10 @@ import Base from '../layouts/Base.astro';
             </div>
             <div class="stacklist">
               <span class="chip">Node.js</span><span class="chip">TypeScript</span><span class="chip">TypeORM</span>
-              <span class="chip">Postgres</span><span class="chip">AWS S3</span><span class="chip">SQS</span>
-              <span class="chip">Lambda</span><span class="chip">CloudFront</span>
+              <span class="chip">Postgres</span><span class="chip">Neon</span><span class="chip">AWS S3</span>
+              <span class="chip">SQS</span><span class="chip">Lambda</span><span class="chip">App Runner</span>
+              <span class="chip">EventBridge</span><span class="chip">SES</span><span class="chip">CloudFront</span>
+              <span class="chip">CDK</span>
             </div>
           </div>
         </aside>
@@ -252,7 +284,7 @@ import Base from '../layouts/Base.astro';
         <div class="stack-col">
           <h3>Data</h3>
           <ul>
-            <li>PostgreSQL <span>— primary</span></li>
+            <li>PostgreSQL <span>— primary · Neon serverless</span></li>
             <li>TypeORM · Prisma</li>
             <li>Redis <span>— cache · locks</span></li>
             <li>SQL modelling · migrations</li>
@@ -261,10 +293,11 @@ import Base from '../layouts/Base.astro';
         <div class="stack-col">
           <h3>AWS</h3>
           <ul>
-            <li>Lambda · API Gateway</li>
-            <li>SQS · EventBridge</li>
-            <li>S3 · CloudFront</li>
-            <li>RDS · IAM · CDK</li>
+            <li>App Runner <span>— API</span></li>
+            <li>Lambda <span>— container-image worker</span></li>
+            <li>SQS · EventBridge · SES</li>
+            <li>S3 · CloudFront · Route 53</li>
+            <li>IAM · CDK <span>— IaC</span></li>
           </ul>
         </div>
         <div class="stack-col">
