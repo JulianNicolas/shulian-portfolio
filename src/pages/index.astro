@@ -689,7 +689,30 @@ import Base from '../layouts/Base.astro';
 
   /* ---------- hero ---------- */
   .hero {
+    position: relative;
+    z-index: 0;
     padding: 74px 0 60px;
+  }
+  @media (min-width: 860px) {
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-image: radial-gradient(
+          circle at 80% 30%,
+          color-mix(in srgb, var(--accent) 16%, transparent) 0%,
+          transparent 55%
+        ),
+        radial-gradient(circle, var(--hairline-2) 1px, transparent 1.6px);
+      background-size:
+        auto,
+        24px 24px;
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 52%, black 68%, black 100%);
+      mask-image: linear-gradient(to right, transparent 0%, transparent 52%, black 68%, black 100%);
+      opacity: 0.7;
+    }
   }
   .hero h1 {
     font-size: clamp(2.3rem, 6vw, 3.7rem);
