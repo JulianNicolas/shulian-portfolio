@@ -20,25 +20,27 @@ import Base from '../layouts/Base.astro';
     <section class="hero" id="top">
       <h1>Julián Antonucci</h1>
       <p class="role">
-        Senior backend engineer building <b>Node.js</b> services that stay predictable under load —
-        <b>distributed systems</b>, <b>Postgres</b>, and pragmatic <b>AWS</b>.
+        Senior backend engineer with <b>7+ years</b> building <b>Node.js</b> and <b>Python</b> systems
+        that hold up under real load — <b>distributed systems</b>, <b>high-throughput APIs</b>, and
+        pragmatic <b>AWS</b>.
       </p>
 
       <div class="facts">
         <div class="fact">
           <div class="k mono">Now</div>
           <div class="v">
-            Lead backend on <a href="#work">ink-cover</a> — migrating the platform from a DigitalOcean
-            droplet to AWS serverless, zero downtime.
+            Most recently 5 years as Senior Software Engineer at NewCombin, on high-traffic systems for
+            US broadcast &amp; media clients. Currently leading <a href="#work">ink-cover</a>'s AWS
+            migration independently.
           </div>
         </div>
         <div class="fact">
           <div class="k mono">Stack</div>
-          <div class="v mono">Node.js · TypeScript · Postgres · TypeORM · AWS (App Runner · Lambda · SQS · S3 · CloudFront · CDK)</div>
+          <div class="v mono">Node.js · TypeScript · Python · PostgreSQL · Redis · RabbitMQ · AWS (Lambda · SQS · EC2 · S3 · CloudFront)</div>
         </div>
         <div class="fact">
           <div class="k mono">Based</div>
-          <div class="v">Argentina · working remote across time zones</div>
+          <div class="v">Remote-first · open to relocation, flexible across US time zones</div>
         </div>
         <div class="fact">
           <div class="k mono">Links</div>
@@ -55,12 +57,84 @@ import Base from '../layouts/Base.astro';
     <section id="work">
       <p class="eyebrow">Selected work</p>
 
-      <!-- CASE 1 — real -->
+      <!-- CASE 1 — NewCombin -->
+      <article class="case">
+        <div class="case-body">
+          <div class="case-head">
+            <h3>Real-time voting platform — race condition at scale</h3>
+            <span class="when mono">2021 – 2026 · NewCombin</span>
+          </div>
+          <p class="lede">
+            Primary backend engineer on a high-traffic survey and voting platform built for major US
+            broadcast networks. During live broadcast events — the exact moment traffic peaks — votes
+            were silently disappearing.
+          </p>
+
+          <h4>What broke</h4>
+          <p class="para">
+            A legacy DynamoDB-to-MySQL migration had left a race condition in the vote-write path.
+            Under the concurrent write volume of a live broadcast, writes overlapped and votes were
+            lost with no error, no alert — just a count that didn't add up after the show aired.
+          </p>
+
+          <h4>What I did</h4>
+          <ul>
+            <li>
+              Traced the loss to the migration's overlapping writes and rebuilt the path around
+              Redis-based vote buffering, collapsing concurrent increments into atomic operations
+              before they ever reached MySQL.
+            </li>
+            <li>
+              Optimized the critical queries in the read/aggregation path and configured CPU-based EC2
+              autoscaling to absorb live-broadcast traffic spikes.
+            </li>
+            <li>
+              Validated the fix with JMeter load tests at 30,000 votes/minute — zero data loss, a 5x
+              increase in processing capacity over the previous ceiling.
+            </li>
+            <li>
+              Removed the dead code left over from the original migration once the new path proved out
+              in production, closing off a source of latent bugs.
+            </li>
+            <li>
+              Built and extended the platform's social distribution integrations (Instagram, TikTok,
+              Facebook, Vimeo) for direct video/image publishing from its media management platform.
+            </li>
+          </ul>
+        </div>
+
+        <aside class="panel">
+          <div class="panel-card">
+            <div class="panel-row">
+              <span class="m-k mono">Load validated</span>
+              <span class="m-v">30,000 votes/min · JMeter</span>
+            </div>
+            <div class="panel-row">
+              <span class="m-k mono">Data loss</span>
+              <span class="m-v">race condition <span class="arrow">→</span> 0%</span>
+            </div>
+            <div class="panel-row">
+              <span class="m-k mono">Capacity</span>
+              <span class="m-v">5x increase</span>
+            </div>
+            <div class="panel-row">
+              <span class="m-k mono">Role</span>
+              <span class="m-v">Primary backend engineer</span>
+            </div>
+            <div class="stacklist">
+              <span class="chip">Node.js</span><span class="chip">MySQL</span><span class="chip">DynamoDB</span>
+              <span class="chip">Redis</span><span class="chip">AWS EC2</span><span class="chip">JMeter</span>
+            </div>
+          </div>
+        </aside>
+      </article>
+
+      <!-- CASE 2 — ink-cover -->
       <article class="case">
         <div class="case-body">
           <div class="case-head">
             <h3>ink-cover — serverless migration</h3>
-            <span class="when mono">2025 – present</span>
+            <span class="when mono">2025 – present · Independent</span>
           </div>
           <p class="lede">
             A Node.js/TypeScript product that turns uploaded images into analysis reports. I lead the
@@ -202,71 +276,47 @@ import Base from '../layouts/Base.astro';
         </aside>
       </article>
 
-      <!-- CASE 2 — template -->
+      <!-- CASE 3 — Verdant Solution -->
       <article class="case">
         <div class="case-body">
           <div class="case-head">
-            <h3>High-throughput ingestion API</h3>
-            <span class="when mono">20XX – 20XX</span>
-            <span class="tag">Template — replace with your project</span>
+            <h3>Print optimization platform — microservices architecture</h3>
+            <span class="when mono">2016 – 2022 · Verdant Solution</span>
           </div>
           <p class="lede">
-            One paragraph: the product, the load it takes, and the one hard constraint that shaped
-            the design (a latency budget, an ordering guarantee, a cost ceiling).
+            Co-founded a software studio serving the graphic arts industry and designed its flagship
+            product: a print optimization system that lays out jobs to minimize material waste.
           </p>
           <h4>What I did</h4>
           <ul>
-            <li>The architectural decision you'd defend in an interview — and the trade-off you accepted to make it.</li>
-            <li>A reliability or data-integrity problem you found and fixed.</li>
-            <li>A performance change with a before/after number in the panel.</li>
+            <li>
+              Designed a microservices architecture: a Node.js/TypeScript backend orchestrating async
+              PDF generation jobs over RabbitMQ, and a Python microservice using Ghostscript to compute
+              layouts that minimize material waste.
+            </li>
+            <li>Built real-time order-status updates over WebSockets and moved generated artifacts to S3.</li>
+            <li>Cut PDF data-extraction time 75% with a Node.js REST API backed by the Python microservice.</li>
+            <li>
+              Cut internal approval-workflow completion time 50% by replacing polling with real-time
+              WebSocket (Socket.IO) file flows.
+            </li>
+            <li>Cut local environment setup time 40% by containerizing the stack with Docker and managing processes with PM2.</li>
           </ul>
         </div>
         <aside class="panel">
           <div class="panel-card">
-            <div class="panel-row"><span class="m-k mono">Throughput</span><span class="m-v slot mono">X req/s sustained</span></div>
-            <div class="panel-row"><span class="m-k mono">p99 latency</span><span class="m-v slot mono">Xms → Yms</span></div>
-            <div class="panel-row"><span class="m-k mono">Team</span><span class="m-v slot mono">size · your role</span></div>
+            <div class="panel-row"><span class="m-k mono">PDF extraction</span><span class="m-v">−75% time</span></div>
+            <div class="panel-row"><span class="m-k mono">Approval workflow</span><span class="m-v">−50% time</span></div>
+            <div class="panel-row"><span class="m-k mono">Env setup</span><span class="m-v">−40% time</span></div>
+            <div class="panel-row"><span class="m-k mono">Role</span><span class="m-v">Co-founder · backend &amp; architecture</span></div>
             <div class="stacklist">
-              <span class="chip">Node.js</span><span class="chip">Kafka / SQS</span><span class="chip">Redis</span><span class="chip">Postgres</span>
+              <span class="chip">Node.js</span><span class="chip">Python</span><span class="chip">RabbitMQ</span>
+              <span class="chip">Ghostscript</span><span class="chip">WebSockets</span><span class="chip">Docker</span>
+              <span class="chip">AWS S3</span>
             </div>
           </div>
         </aside>
       </article>
-
-      <!-- CASE 3 — template -->
-      <article class="case">
-        <div class="case-body">
-          <div class="case-head">
-            <h3>Payments &amp; billing service</h3>
-            <span class="when mono">20XX – 20XX</span>
-            <span class="tag">Template — replace with your project</span>
-          </div>
-          <p class="lede">
-            A domain where correctness matters more than speed — money, subscriptions, entitlements.
-            Say what "wrong" would have cost.
-          </p>
-          <h4>What I did</h4>
-          <ul>
-            <li>How you made operations idempotent and safe to retry.</li>
-            <li>How you reconciled against the provider (Stripe, MercadoPago) and caught drift.</li>
-            <li>An audit or observability practice you introduced.</li>
-          </ul>
-        </div>
-        <aside class="panel">
-          <div class="panel-card">
-            <div class="panel-row"><span class="m-k mono">Volume</span><span class="m-v slot mono">$ / month processed</span></div>
-            <div class="panel-row"><span class="m-k mono">Reconciliation</span><span class="m-v slot mono">mismatch rate</span></div>
-            <div class="stacklist">
-              <span class="chip">Node.js</span><span class="chip">TypeScript</span><span class="chip">Stripe</span><span class="chip">Postgres</span>
-            </div>
-          </div>
-        </aside>
-      </article>
-
-      <p class="note">
-        Case 1 is drawn from real work on this project. Cases 2 and 3 are structural templates — same
-        shape, your projects and numbers. Three deep case studies read better than a grid of ten repos.
-      </p>
     </section>
 
     <section id="stack">
@@ -277,36 +327,38 @@ import Base from '../layouts/Base.astro';
           <ul>
             <li>Node.js <span>— core</span></li>
             <li>TypeScript <span>— strict</span></li>
+            <li>Python <span>— Django</span></li>
             <li>NestJS / Express</li>
-            <li>Vitest · Jest</li>
+            <li>Jest <span>— unit · integration</span></li>
           </ul>
         </div>
         <div class="stack-col">
           <h3>Data</h3>
           <ul>
             <li>PostgreSQL <span>— primary · Neon serverless</span></li>
-            <li>TypeORM · Prisma</li>
-            <li>Redis <span>— cache · locks</span></li>
-            <li>SQL modelling · migrations</li>
+            <li>MySQL · DynamoDB · MongoDB</li>
+            <li>Redis <span>— cache · buffering</span></li>
+            <li>RabbitMQ <span>— messaging</span></li>
+            <li>TypeORM · Sequelize · Drizzle</li>
           </ul>
         </div>
         <div class="stack-col">
           <h3>AWS</h3>
           <ul>
-            <li>App Runner <span>— API</span></li>
+            <li>EC2 · App Runner <span>— API</span></li>
             <li>Lambda <span>— container-image worker</span></li>
-            <li>SQS · EventBridge · SES</li>
+            <li>SQS · SNS · EventBridge · SES</li>
             <li>S3 · CloudFront · Route 53</li>
-            <li>IAM · CDK <span>— IaC</span></li>
+            <li>CodeDeploy · IAM · CDK</li>
           </ul>
         </div>
         <div class="stack-col">
           <h3>Delivery</h3>
           <ul>
-            <li>Docker</li>
-            <li>GitHub Actions <span>— CI/CD</span></li>
-            <li>Observability <span>— logs · traces</span></li>
-            <li>Load &amp; failure testing</li>
+            <li>Docker · Docker Compose · PM2</li>
+            <li>GitHub Actions · Bitbucket Pipelines</li>
+            <li>Observability <span>— Sentry · CloudWatch</span></li>
+            <li>Load &amp; failure testing <span>— JMeter</span></li>
           </ul>
         </div>
       </div>
@@ -318,25 +370,46 @@ import Base from '../layouts/Base.astro';
         <div class="stop">
           <div class="yr">2025 — now</div>
           <div class="role">
-            <b>Lead Backend Engineer</b> · <span class="co">ink-cover</span>
+            <b>Independent Backend Engineer</b> · <span class="co">ink-cover</span>
             <p>
-              Own the backend. Leading the DigitalOcean → AWS serverless migration; storage
-              abstraction, queue-based pipeline, deploy safety.
+              Own the backend for a graphic-arts SaaS product — leading its migration off a single
+              droplet onto an AWS event-driven architecture (SQS, Lambda, App Runner, CDK).
             </p>
           </div>
         </div>
         <div class="stop">
-          <div class="yr">20XX — 20XX</div>
+          <div class="yr">2021 — 2026</div>
           <div class="role">
-            <b>Senior Backend Engineer</b> · <span class="co">Company</span>
-            <p class="tag inline">Template — one line on scope, scale, and what you owned.</p>
+            <b>Senior Software Engineer</b> · <span class="co">NewCombin</span>
+            <p>
+              Primary backend engineer across edtech, media, and travel client projects. Fixed a
+              data-loss race condition on a live broadcast-voting platform, validated at 30,000
+              votes/min with zero loss.
+            </p>
           </div>
         </div>
         <div class="stop">
-          <div class="yr">20XX — 20XX</div>
+          <div class="yr">2016 — 2022</div>
           <div class="role">
-            <b>Backend Engineer</b> · <span class="co">Company</span>
-            <p>Template — the role where you went from "writes features" to "owns systems".</p>
+            <b>Co-Founder &amp; Software Engineer</b> · <span class="co">Verdant Solution</span>
+            <p>
+              Co-founded a software studio for the graphic arts industry; designed a Node.js/Python
+              microservices platform for print layout optimization.
+            </p>
+          </div>
+        </div>
+        <div class="stop">
+          <div class="yr">2020 — 2021</div>
+          <div class="role">
+            <b>Full Stack Developer</b> · <span class="co">NetRacer</span> <span class="tag inline">Freelance</span>
+            <p>Automated tournament-results processing from game-output XML, cutting processing time 60%.</p>
+          </div>
+        </div>
+        <div class="stop">
+          <div class="yr">2019 — 2021</div>
+          <div class="role">
+            <b>Software Development Engineer</b> · <span class="co">COMBINATORIA</span>
+            <p>Full stack engineer on a maritime operations platform — vessel, cargo, and voyage tracking with Angular and a custom REST API.</p>
           </div>
         </div>
       </div>
